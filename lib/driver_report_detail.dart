@@ -1,4 +1,3 @@
-// driver_report_detail.dart
 import 'package:flutter/material.dart';
 import 'API/api_service.dart';
 
@@ -23,7 +22,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
   String? err;
   Map<String, dynamic>? report;
 
-  // ===== booking / estimate / review =====
   bool loadingBooking = false;
   bool loadingEstimate = false;
   bool loadingReview = false;
@@ -34,19 +32,12 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
 
   String? estimateMsg;
 
-  // =========================
-  // BOOKING (Driver side)
-  // =========================
   DateTime? _preferredAt;
   final bookingNoteC = TextEditingController();
 
-  // review form
   int _rating = 5;
   final reviewC = TextEditingController();
 
-  // =========================
-  // SAFE HELPERS
-  // =========================
   Map<String, dynamic>? _toMap(dynamic x) {
     if (x is Map<String, dynamic>) return x;
     if (x is Map) return x.map((k, v) => MapEntry(k.toString(), v));
@@ -87,27 +78,17 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     return null;
   }
 
-  // =========================
-  // ✅ UNWRAP HELPERS (for {message, data:{...}})
-  // =========================
   Map<String, dynamic>? _unwrapDataMap(dynamic res) {
     final m = _toMap(res);
     if (m == null) return null;
 
-    // kalau backend return {message, data:{...}}
     final data = m['data'];
     final dm = _toMap(data);
     if (dm != null) return dm;
 
-    // kalau backend return {...} langsung
     return m;
   }
 
-  // =========================
-  // ✅ REVIEW NORMALIZER
-  // - supaya response {message, data:null} tidak dianggap review
-  // - dan objek aneh tanpa id/rating juga dianggap null
-  // =========================
   Map<String, dynamic>? _normalizeReview(dynamic res) {
     final m = _unwrapDataMap(res);
     if (m == null || m.isEmpty) return null;
@@ -115,20 +96,14 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     final id = _toInt(m['id'], 0);
     final rating = _toInt(m['rating'], 0);
 
-    // kalau tidak punya id & rating <= 0 → ini bukan review valid
     if (id <= 0 && rating <= 0) return null;
 
     return m;
   }
 
-  // =========================
-  // ✅ fallback nama teknisi (biar tidak "-")
-  // ambil dari latestTechnicianResponse / berbagai kemungkinan field
-  // =========================
   String _fallbackTechnicianName() {
     final latest = _latestResponse();
 
-    // coba berbagai kemungkinan struktur (aman)
     final techMap = _toMap(
       latest?['technician'] ??
           latest?['technician_user'] ??
@@ -165,7 +140,7 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
   }
 
   Future<void> _loadAll() async {
-    await _load(); // report detail
+    await _load(); 
     await Future.wait([_loadBooking(), _loadCostEstimate(), _loadReview()]);
   }
 
@@ -192,7 +167,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
       final m = _toMap(res);
       setState(() => booking = m);
 
-      // optional: isi form update dari data yang ada (supaya tidak overwrite kosong)
       if (m != null) {
         final nd = _str(m['note_driver'], '');
         if (nd.isNotEmpty && nd != '-') {
@@ -240,9 +214,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     }
   }
 
-  // =========================
-  // ✅ REVIEW LOAD (fixed + normalize)
-  // =========================
   Future<void> _loadReview() async {
     setState(() => loadingReview = true);
     try {
@@ -255,9 +226,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     }
   }
 
-  // =========================
-  // PARSERS
-  // =========================
   Map<String, dynamic>? _vehicle() => _toMap(report?['vehicle']);
 
   String _plate() {
@@ -320,9 +288,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     return st == 'selesai';
   }
 
-  // =========================
-  // ACTIONS: edit/delete report
-  // =========================
   Future<void> _edit() async {
     if (_locked()) {
       _toast('❌ Laporan sudah diproses teknisi, tidak bisa diedit.');
@@ -404,9 +369,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     }
   }
 
-  // =========================
-  // BOOKING ACTIONS
-  // =========================
   Future<void> _pickPreferredAt() async {
     final d = await showDatePicker(
       context: context,
@@ -483,9 +445,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     }
   }
 
-  // =========================
-  // ✅ REVIEW ACTION (fixed + normalize)
-  // =========================
   Future<void> _submitReview() async {
     if (!_canReview()) {
       _toast('❌ Rating hanya bisa setelah status "selesai".');
@@ -499,7 +458,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
         review: reviewC.text.trim().isEmpty ? null : reviewC.text.trim(),
       );
 
-      // ✅ normalize supaya tidak salah anggap review ada
       setState(() => review = _normalizeReview(res));
 
       _toast('✅ Review tersimpan.');
@@ -513,9 +471,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t)));
   }
 
-  // =========================
-  // BOOKING UI HELPERS
-  // =========================
   String _fmtDateTime(dynamic raw) {
     final s = _str(raw, '-');
     if (s == '-' || s.trim().isEmpty) return '-';
@@ -555,9 +510,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     );
   }
 
-  // =========================
-  // UI
-  // =========================
   @override
   Widget build(BuildContext context) {
     final plate = _plate();
@@ -687,9 +639,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     );
   }
 
-  // =========================
-  // Booking card
-  // =========================
   Widget _bookingCard() {
     final b = booking;
 
@@ -907,9 +856,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     );
   }
 
-  // =========================
-  // Cost estimate card
-  // =========================
   Widget _costEstimateCard() {
     final e = costEstimate;
 
@@ -959,11 +905,7 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     );
   }
 
-  // =========================
-  // Review card (FIXED)
-  // =========================
   Widget _reviewCard() {
-    // ✅ pastikan yang dipakai adalah review valid
     final r = _normalizeReview(review);
 
     final latest = _latestResponse();
@@ -977,13 +919,11 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     if (r != null) {
       rating = _toInt(r['rating']);
 
-      // prefer field backend kamu: "review"
       reviewText = _str(r['review'], '-');
 
       final tech = _toMap(r['technician']);
       techName = _str(tech?['username'] ?? tech?['name'], '-');
 
-      // fallback kalau field technician tidak ikut
       if (techName == '-' || techName.trim().isEmpty) {
         final fb = _fallbackTechnicianName();
         if (fb != '-') techName = fb;
@@ -1025,7 +965,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
           ),
         ],
 
-        // ✅ hanya tampil "review tersimpan" jika review valid (r != null)
         if (!loadingReview && r != null) ...[
           _kv('Teknisi', techName),
           _kv('Rating', rating.toString()),
@@ -1037,7 +976,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
           ),
         ],
 
-        // ✅ form hanya muncul jika review belum ada DAN status selesai
         if (!loadingReview && r == null && canRate) ...[
           _kv('Teknisi', techName),
           const SizedBox(height: 8),
@@ -1084,9 +1022,6 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     );
   }
 
-  // =========================
-  // Base widgets
-  // =========================
   Widget _infoCard({required String title, required List<Widget> children}) {
     return Card(
       child: Padding(
