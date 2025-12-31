@@ -6,10 +6,12 @@ import 'API/api_service.dart';
 import 'utils/auth_storage.dart';
 import 'driver_report_detail.dart';
 import 'models/api_damage_report.dart';
-import 'utils/push_fcm.dart'; 
-import 'main.dart' show LoginPage;  
+import 'utils/push_fcm.dart';
+import 'main.dart' show LoginPage;
 
-
+// ✅ NEW (Firestore Inbox Notifications)
+import '../utils/notifications_page.dart';
+import 'utils/firestore_service.dart';
 
 class DriverHomePage extends StatefulWidget {
   final String token;
@@ -55,6 +57,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
   DateTime? quickPreferredAt;
   final quickBookingNoteC = TextEditingController();
 
+  // =====================================================
+  // ✅ Firestore Notifications (Inbox)
+  // =====================================================
+  String? _userId;
+  bool _loadingMe = false;
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +70,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
     _loadAll();
     _bindFirebaseHandlers();
+
+    // ✅ ambil userId dari /me untuk path Firestore users/{userId}/notifications
+    _loadMe();
   }
 
   // =====================================================
@@ -101,13 +112,20 @@ class _DriverHomePageState extends State<DriverHomePage> {
     } catch (_) {}
   }
 
+  // =====================================================
+  // ✅ UPDATED: support type = service_booking juga (sesuai controller admin)
+  // - type: damage_report / service_booking
+  // - role: driver
+  // - report_id ada di payload
+  // =====================================================
   void _handleTapNotification(Map<String, dynamic> data) {
     final type = (data['type'] ?? '').toString();
     final role = (data['role'] ?? '').toString().toLowerCase();
     final reportId =
         int.tryParse((data['report_id'] ?? data['id'] ?? '').toString()) ?? 0;
 
-    if (type != 'damage_report') return;
+    // ✅ terima notif lama (damage_report) dan notif booking (service_booking)
+    if (type != 'damage_report' && type != 'service_booking') return;
     if (role != 'driver') return;
     if (reportId <= 0) return;
 
@@ -155,6 +173,32 @@ class _DriverHomePageState extends State<DriverHomePage> {
     if (v == null) return fallback;
     if (v is int) return v;
     return int.tryParse(v.toString()) ?? fallback;
+  }
+
+  // =====================================================
+  // ✅ GET /me untuk ambil userId Firestore
+  // - tetap tolerant dengan response {data:{...}} atau {...}
+  // =====================================================
+  Future<void> _loadMe() async {
+    if (_loadingMe) return;
+    _loadingMe = true;
+
+    try {
+      final me = await api.me();
+      final m = _toMap(me);
+      final dataMap = (m != null && m['data'] is Map) ? _toMap(m['data']) : null;
+
+      // ambil id dari m atau m['data']
+      final id = (m?['id'] ?? dataMap?['id'])?.toString();
+
+      if (id != null && id.trim().isNotEmpty) {
+        if (mounted) setState(() => _userId = id.trim());
+      }
+    } catch (_) {
+      // kalau gagal, tombol notif tetap disabled
+    } finally {
+      _loadingMe = false;
+    }
   }
 
   // =========================
@@ -493,8 +537,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
               const SizedBox(height: 6),
               Text(
                 'Aturan backend: jika reminder aktif, next_service_at wajib diisi.',
-                style:
-                    TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 12),
+                style: TextStyle(
+                  color: Colors.black.withOpacity(0.6),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -907,6 +953,66 @@ class _DriverHomePageState extends State<DriverHomePage> {
       appBar: AppBar(
         title: const Text('Driver'),
         actions: [
+          // ✅ NOTIFICATIONS BUTTON + BADGE (Firestore)
+          if (_userId == null)
+            IconButton(
+              tooltip: 'Notifikasi (butuh /me id)',
+              onPressed: null,
+              icon: const Icon(Icons.notifications),
+            )
+          else
+            StreamBuilder<int>(
+              stream: FirestoreService.streamUnreadCount(userId: _userId!),
+              builder: (context, snap) {
+                final unread = snap.data ?? 0;
+
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: 'Notifikasi',
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => NotificationsPage(
+                              token: widget.token,
+                              userId: _userId!,
+                              role: 'driver',
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.notifications),
+                    ),
+                    if (unread > 0)
+                      Positioned(
+                        right: 10,
+                        top: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            unread > 99 ? '99+' : unread.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+
           IconButton(
             tooltip: 'Refresh',
             onPressed: _loadAll,

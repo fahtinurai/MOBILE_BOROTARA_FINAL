@@ -11,7 +11,7 @@ class ApiService {
   // =============================
   // CONFIG
   // =============================
-  static const String baseUrl = "http://192.168.18.238:8000/api";
+  static const String baseUrl = "http://192.168.18.191:8000/api";
   static const String loginUrl = "$baseUrl/login";
 
   // =============================
