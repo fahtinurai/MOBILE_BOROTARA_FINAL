@@ -4,12 +4,13 @@ class AuthStorage {
   static const _kToken = 'AUTH_TOKEN';
   static const _kUserId = 'AUTH_USER_ID';
 
-  // ================= TOKEN =================
+  // Menyimpan token
   static Future<void> saveToken(String token) async {
     final pref = await SharedPreferences.getInstance();
     await pref.setString(_kToken, token);
   }
 
+  //Mengambil token
   static Future<String?> getToken() async {
     final pref = await SharedPreferences.getInstance();
     final t = pref.getString(_kToken);
@@ -17,24 +18,26 @@ class AuthStorage {
     return t.trim();
   }
 
-  // ================= USER ID =================
+  // Menyimpan user id
   static Future<void> saveUserId(int userId) async {
     final pref = await SharedPreferences.getInstance();
     await pref.setInt(_kUserId, userId);
   }
 
+  //Menambahkan user id
   static Future<int?> getUserId() async {
     final pref = await SharedPreferences.getInstance();
     return pref.getInt(_kUserId);
   }
 
-  // ================= CLEAR =================
+  //Clear
   static Future<void> clear() async {
     final pref = await SharedPreferences.getInstance();
     await pref.remove(_kToken);
     await pref.remove(_kUserId);
   }
 
+  //Clear semuanya
   static Future<void> clearAll() async {
     final pref = await SharedPreferences.getInstance();
     await pref.clear();
