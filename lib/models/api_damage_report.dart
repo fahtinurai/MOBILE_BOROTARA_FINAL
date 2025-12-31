@@ -5,7 +5,6 @@ class ApiVehicle {
   final String? plateNumber;
   final int? year;
 
-  // Fitur untuk mengingat servis berikutnya
   final DateTime? nextServiceAt;
   final bool reminderEnabled;
   final int reminderDaysBefore;
@@ -21,7 +20,6 @@ class ApiVehicle {
     this.reminderDaysBefore = 3,
   });
 
- //safe helpers
   static int _toInt(dynamic v, [int fallback = 0]) {
     if (v == null) return fallback;
     if (v is int) return v;
@@ -50,28 +48,36 @@ class ApiVehicle {
       id: _toInt(j['id'], 0),
       brand: j['brand']?.toString(),
       model: j['model']?.toString(),
-      plateNumber: (j['plate_number'] ?? j['plate'] ?? j['plateNumber'])?.toString(),
-      year: (j['year'] is int) ? j['year'] as int : int.tryParse('${j['year']}'),
+      plateNumber: (j['plate_number'] ?? j['plate'] ?? j['plateNumber'])
+          ?.toString(),
+      year: (j['year'] is int)
+          ? j['year'] as int
+          : int.tryParse('${j['year']}'),
 
-      // untuk service reminder
+      //untuk service reminder
       nextServiceAt: _toDate(j['next_service_at'] ?? j['nextServiceAt']),
-      reminderEnabled: _toBool(j['reminder_enabled'] ?? j['reminderEnabled'], false),
-      reminderDaysBefore: _toInt(j['reminder_days_before'] ?? j['reminderDaysBefore'], 3),
+      reminderEnabled: _toBool(
+        j['reminder_enabled'] ?? j['reminderEnabled'],
+        false,
+      ),
+      reminderDaysBefore: _toInt(
+        j['reminder_days_before'] ?? j['reminderDaysBefore'],
+        3,
+      ),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "brand": brand,
-        "model": model,
-        "plate_number": plateNumber,
-        "year": year,
+    "id": id,
+    "brand": brand,
+    "model": model,
+    "plate_number": plateNumber,
+    "year": year,
 
-        
-        "next_service_at": nextServiceAt?.toIso8601String(),
-        "reminder_enabled": reminderEnabled,
-        "reminder_days_before": reminderDaysBefore,
-      };
+    "next_service_at": nextServiceAt?.toIso8601String(),
+    "reminder_enabled": reminderEnabled,
+    "reminder_days_before": reminderDaysBefore,
+  };
 }
 
 class ApiServiceBooking {
@@ -133,8 +139,12 @@ class ApiServiceBooking {
       vehicleId: _toInt(j['vehicle_id'] ?? j['vehicleId'], 0),
       scheduledAt: _toDate(j['scheduled_at'] ?? j['scheduledAt']),
       status: _toStr(j['status'], 'requested'),
-      estimatedStartAt: _toDate(j['estimated_start_at'] ?? j['estimatedStartAt']),
-      estimatedFinishAt: _toDate(j['estimated_finish_at'] ?? j['estimatedFinishAt']),
+      estimatedStartAt: _toDate(
+        j['estimated_start_at'] ?? j['estimatedStartAt'],
+      ),
+      estimatedFinishAt: _toDate(
+        j['estimated_finish_at'] ?? j['estimatedFinishAt'],
+      ),
       queueNumber: (j['queue_number'] == null && j['queueNumber'] == null)
           ? null
           : _toInt(j['queue_number'] ?? j['queueNumber']),
@@ -144,18 +154,18 @@ class ApiServiceBooking {
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "damage_report_id": damageReportId,
-        "driver_id": driverId,
-        "vehicle_id": vehicleId,
-        "scheduled_at": scheduledAt?.toIso8601String(),
-        "status": status,
-        "estimated_start_at": estimatedStartAt?.toIso8601String(),
-        "estimated_finish_at": estimatedFinishAt?.toIso8601String(),
-        "queue_number": queueNumber,
-        "note_driver": noteDriver,
-        "note_admin": noteAdmin,
-      };
+    "id": id,
+    "damage_report_id": damageReportId,
+    "driver_id": driverId,
+    "vehicle_id": vehicleId,
+    "scheduled_at": scheduledAt?.toIso8601String(),
+    "status": status,
+    "estimated_start_at": estimatedStartAt?.toIso8601String(),
+    "estimated_finish_at": estimatedFinishAt?.toIso8601String(),
+    "queue_number": queueNumber,
+    "note_driver": noteDriver,
+    "note_admin": noteAdmin,
+  };
 }
 
 class ApiCostEstimate {
@@ -207,7 +217,6 @@ class ApiCostEstimate {
     final parts = _toInt(j['parts_cost'] ?? j['partsCost'], 0);
     final other = _toInt(j['other_cost'] ?? j['otherCost'], 0);
 
-    // total_cost dari backend
     final total = (j['total_cost'] ?? j['totalCost']) == null
         ? (labor + parts + other)
         : _toInt(j['total_cost'] ?? j['totalCost'], (labor + parts + other));
@@ -230,18 +239,18 @@ class ApiCostEstimate {
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "damage_report_id": damageReportId,
-        "technician_id": technicianId,
-        "labor_cost": laborCost,
-        "parts_cost": partsCost,
-        "other_cost": otherCost,
-        "total_cost": totalCost,
-        "status": status,
-        "note": note,
-        "approved_by": approvedBy,
-        "approved_at": approvedAt?.toIso8601String(),
-      };
+    "id": id,
+    "damage_report_id": damageReportId,
+    "technician_id": technicianId,
+    "labor_cost": laborCost,
+    "parts_cost": partsCost,
+    "other_cost": otherCost,
+    "total_cost": totalCost,
+    "status": status,
+    "note": note,
+    "approved_by": approvedBy,
+    "approved_at": approvedAt?.toIso8601String(),
+  };
 }
 
 class ApiTechnicianReview {
@@ -250,7 +259,7 @@ class ApiTechnicianReview {
   final int driverId;
   final int technicianId;
 
-  final int rating; // 1..5
+  final int rating;
   final String? review;
   final DateTime? createdAt;
 
@@ -291,14 +300,14 @@ class ApiTechnicianReview {
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "damage_report_id": damageReportId,
-        "driver_id": driverId,
-        "technician_id": technicianId,
-        "rating": rating,
-        "review": review,
-        "created_at": createdAt?.toIso8601String(),
-      };
+    "id": id,
+    "damage_report_id": damageReportId,
+    "driver_id": driverId,
+    "technician_id": technicianId,
+    "rating": rating,
+    "review": review,
+    "created_at": createdAt?.toIso8601String(),
+  };
 }
 
 class ApiDamageReport {
@@ -307,7 +316,6 @@ class ApiDamageReport {
   final String status;
   final String? note;
   final ApiVehicle? vehicle;
-
 
   final ApiServiceBooking? booking;
   final ApiCostEstimate? costEstimate;
@@ -342,9 +350,10 @@ class ApiDamageReport {
     return null;
   }
 
-
   factory ApiDamageReport.fromJson(Map<String, dynamic> j) {
-    final latest = _asMap(j['latestTechnicianResponse'] ?? j['latest_technician_response']);
+    final latest = _asMap(
+      j['latestTechnicianResponse'] ?? j['latest_technician_response'],
+    );
 
     final trs = j['technicianResponses'] ?? j['technician_responses'];
     Map<String, dynamic>? last;
@@ -353,14 +362,14 @@ class ApiDamageReport {
     final computedStatus =
         _toStr(latest?['status']) ??
         _toStr(last?['status']) ??
-        _toStr(j['computed_status']) ?? // kalau backend kamu pakai accessor computed_status
+        _toStr(
+          j['computed_status'],
+        ) ?? // kalau backend kamu pakai accessor computed_status
         _toStr(j['status']) ??
         'menunggu';
 
     final computedNote =
-        _toStr(latest?['note']) ??
-        _toStr(last?['note']) ??
-        _toStr(j['note']);
+        _toStr(latest?['note']) ?? _toStr(last?['note']) ?? _toStr(j['note']);
 
     final v = _asMap(j['vehicle']);
 
@@ -382,15 +391,15 @@ class ApiDamageReport {
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "description": description,
-        "status": status,
-        "note": note,
-        "vehicle": vehicle?.toJson(),
-        "booking": booking?.toJson(),
-        "cost_estimate": costEstimate?.toJson(),
-        "review": review?.toJson(),
-      };
+    "id": id,
+    "description": description,
+    "status": status,
+    "note": note,
+    "vehicle": vehicle?.toJson(),
+    "booking": booking?.toJson(),
+    "cost_estimate": costEstimate?.toJson(),
+    "review": review?.toJson(),
+  };
 
   //firebase / fcm helper
   static bool isDamageReportPayload(Map<String, dynamic> data) {
@@ -399,7 +408,10 @@ class ApiDamageReport {
   }
 
   static int payloadReportId(Map<String, dynamic> data) {
-    return _toInt(data['report_id'] ?? data['damage_report_id'] ?? data['id'], 0);
+    return _toInt(
+      data['report_id'] ?? data['damage_report_id'] ?? data['id'],
+      0,
+    );
   }
 
   static String payloadRole(Map<String, dynamic> data) {
