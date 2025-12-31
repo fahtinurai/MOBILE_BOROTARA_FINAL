@@ -9,7 +9,6 @@ import 'models/api_damage_report.dart';
 import 'utils/push_fcm.dart';
 import 'main.dart' show LoginPage;
 
-// ✅ NEW (Firestore Inbox Notifications)
 import '../utils/notifications_page.dart';
 import 'utils/firestore_service.dart';
 
@@ -32,34 +31,26 @@ class _DriverHomePageState extends State<DriverHomePage> {
   String? errReports;
   String? msg;
 
-  /// NOTE:
-  /// Backend myVehicles() return list of VehicleAssignment with relation vehicle
-  /// -> vehicles list here = assignments
+  
   List<dynamic> vehicles = [];
   List<ApiDamageReport> reports = [];
 
-  // ===== FILTER STATE =====
+  
   String statusFilter = 'all';
   String searchPlate = '';
 
   String? selectedPlate;
   final descC = TextEditingController();
 
-  // ===== Firebase listeners =====
   bool _fcmHandledInitial = false;
 
-  // =====================================================
-  // ✅ QUICK BOOKING (Opsi A: panel di Home via tombol "Booking")
-  // =====================================================
+  
   bool loadingQuickBooking = false;
   Map<String, dynamic>? quickBooking;
 
   DateTime? quickPreferredAt;
   final quickBookingNoteC = TextEditingController();
 
-  // =====================================================
-  // ✅ Firestore Notifications (Inbox)
-  // =====================================================
   String? _userId;
   bool _loadingMe = false;
 
@@ -71,13 +62,9 @@ class _DriverHomePageState extends State<DriverHomePage> {
     _loadAll();
     _bindFirebaseHandlers();
 
-    // ✅ ambil userId dari /me untuk path Firestore users/{userId}/notifications
     _loadMe();
   }
 
-  // =====================================================
-  // FIREBASE: Tap notif -> buka detail report driver
-  // =====================================================
   void _bindFirebaseHandlers() {
     _handleInitialMessageOnce();
 
@@ -112,19 +99,12 @@ class _DriverHomePageState extends State<DriverHomePage> {
     } catch (_) {}
   }
 
-  // =====================================================
-  // ✅ UPDATED: support type = service_booking juga (sesuai controller admin)
-  // - type: damage_report / service_booking
-  // - role: driver
-  // - report_id ada di payload
-  // =====================================================
   void _handleTapNotification(Map<String, dynamic> data) {
     final type = (data['type'] ?? '').toString();
     final role = (data['role'] ?? '').toString().toLowerCase();
     final reportId =
         int.tryParse((data['report_id'] ?? data['id'] ?? '').toString()) ?? 0;
 
-    // ✅ terima notif lama (damage_report) dan notif booking (service_booking)
     if (type != 'damage_report' && type != 'service_booking') return;
     if (role != 'driver') return;
     if (reportId <= 0) return;
@@ -143,9 +123,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     await Future.wait([_loadVehicles(), _loadReports()]);
   }
 
-  // =========================
-  // ✅ SAFE JSON HELPERS
-  // =========================
+
   Map<String, dynamic>? _toMap(dynamic x) {
     if (x is Map<String, dynamic>) return x;
     if (x is Map) return Map<String, dynamic>.from(x);
@@ -153,8 +131,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
   }
 
   List<dynamic> _unwrapList(dynamic res) {
-    // Backend driver endpoints mostly return list/object directly,
-    // but keep tolerant unwrapping if ApiService wraps it.
+ 
     if (res is List) return res;
     if (res is Map && res['data'] is List) return res['data'] as List;
     if (res is Map && res['data'] is Map && (res['data']['data'] is List)) {
@@ -175,10 +152,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return int.tryParse(v.toString()) ?? fallback;
   }
 
-  // =====================================================
-  // ✅ GET /me untuk ambil userId Firestore
-  // - tetap tolerant dengan response {data:{...}} atau {...}
-  // =====================================================
+ 
   Future<void> _loadMe() async {
     if (_loadingMe) return;
     _loadingMe = true;
@@ -188,22 +162,18 @@ class _DriverHomePageState extends State<DriverHomePage> {
       final m = _toMap(me);
       final dataMap = (m != null && m['data'] is Map) ? _toMap(m['data']) : null;
 
-      // ambil id dari m atau m['data']
       final id = (m?['id'] ?? dataMap?['id'])?.toString();
 
       if (id != null && id.trim().isNotEmpty) {
         if (mounted) setState(() => _userId = id.trim());
       }
     } catch (_) {
-      // kalau gagal, tombol notif tetap disabled
     } finally {
       _loadingMe = false;
     }
   }
 
-  // =========================
-  // Helpers: vehicle parsing (assignment-safe)
-  // =========================
+ 
   Map<String, dynamic>? _vehicleMap(dynamic v) {
     final m = _toMap(v);
     if (m == null) return null;
@@ -221,9 +191,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return _str(vv?['brand'], '-');
   }
 
-  /// ✅ IMPORTANT FIX:
-  /// myVehicles() returns VehicleAssignment, so v['id'] is assignment id.
-  /// Reminder endpoint expects vehicle id.
+
   int _vehicleIdFromVehicle(dynamic v) {
     final vv = _vehicleMap(v);
     return _toInt(vv?['id'], 0);
@@ -248,9 +216,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return _toInt(x, 3);
   }
 
-  // =========================
-  // ✅ Dropdown helper (anti duplikat & anti value tidak ada)
-  // =========================
+  
   Map<String, dynamic> _uniqueVehiclesByPlate() {
     final unique = <String, dynamic>{};
     for (final v in vehicles) {
@@ -271,9 +237,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     return null;
   }
 
-  // =========================
-  // LOADERS
-  // =========================
+  
   Future<void> _loadVehicles() async {
     setState(() {
       loadingVehicles = true;
@@ -282,12 +246,11 @@ class _DriverHomePageState extends State<DriverHomePage> {
     });
 
     try {
-      final v = await api.driverVehicles(); // backend: myVehicles()
+      final v = await api.driverVehicles(); 
       setState(() {
         vehicles = v;
       });
 
-      // ensure selectedPlate valid
       final unique = _uniqueVehiclesByPlate();
       final plates = unique.keys.toList();
 
@@ -314,8 +277,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     });
 
     try {
-      // backend: DamageReportController@index
-      // status=menunggu => special case handled backend
+      
       final res = await api.getDamageReportsDriver(
         status: statusFilter == 'all' ? null : statusFilter,
       );
@@ -371,9 +333,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     );
   }
 
-  // =========================
-  // ✅ Helpers: report parsing (PAKAI MODEL)
-  // =========================
+  
   int _idFromReport(ApiDamageReport r) => r.id;
 
   String _plateFromReport(ApiDamageReport r) {
@@ -388,13 +348,10 @@ class _DriverHomePageState extends State<DriverHomePage> {
   String _noteFromReport(ApiDamageReport r) => _str(r.note, '-');
 
   bool _isLocked(ApiDamageReport r) {
-    // UI rule: locked if status != menunggu
     return _statusFromReport(r) != 'menunggu';
   }
 
-  // =========================
-  // Filter logic
-  // =========================
+
   bool _matchesStatus(ApiDamageReport r) {
     if (statusFilter == 'all') return true;
     return _statusFromReport(r).toLowerCase() == statusFilter.toLowerCase();
@@ -428,9 +385,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     }
 
     try {
-      // backend verifyVehicle() optional but good UX
       await api.verifyVehicle(plate);
-      // backend store() create report
       await api.createDamageReportDriver(plateNumber: plate, description: desc);
 
       descC.clear();
@@ -443,11 +398,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     }
   }
 
-  // =========================
-  // ✅ Service Reminder Dialog (match backend)
-  // PUT /driver/vehicles/{vehicle}/service-reminder
-  // body: next_service_at (nullable date), reminder_enabled (bool), reminder_days_before (1..30)
-  // =========================
+ 
   Future<void> _openReminderDialog(dynamic assignmentOrVehicle) async {
     final vid = _vehicleIdFromVehicle(assignmentOrVehicle);
     if (vid <= 0) {
@@ -579,9 +530,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
     }
   }
 
-  // =====================================================
-  // ✅ QUICK BOOKING (panel)
-  // =====================================================
+
 
   Future<void> _loadQuickBooking(int reportId) async {
     setState(() {
@@ -688,7 +637,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
       return;
     }
 
-    // reset form tiap buka panel (biar ga nyangkut)
     quickPreferredAt = null;
     quickBookingNoteC.text = '';
 
@@ -734,9 +682,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
                     if (loadingQuickBooking) const LinearProgressIndicator(),
 
-                    // =============================
-                    // CASE: belum ada booking
-                    // =============================
+                   
                     if (!loadingQuickBooking && b == null) ...[
                       Container(
                         padding: const EdgeInsets.all(12),
@@ -796,9 +742,7 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       ),
                     ],
 
-                    // =============================
-                    // CASE: booking sudah ada
-                    // =============================
+                   
                     if (!loadingQuickBooking && b != null) ...[
                       Row(
                         children: [
@@ -832,7 +776,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
                       const SizedBox(height: 12),
                       const Divider(height: 18),
 
-                      // ==== Update request (karena backend updateOrCreate) ====
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -953,7 +896,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
       appBar: AppBar(
         title: const Text('Driver'),
         actions: [
-          // ✅ NOTIFICATIONS BUTTON + BADGE (Firestore)
           if (_userId == null)
             IconButton(
               tooltip: 'Notifikasi (butuh /me id)',
@@ -1099,7 +1041,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
   }
 
   Widget _tabCreateReport() {
-    // ✅ dedup item dropdown + pastikan value ada di items
     final unique = _uniqueVehiclesByPlate();
 
     final plateItems = unique.entries.map((e) {
@@ -1113,7 +1054,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
 
     final safeValue = _safeSelectedPlateFromItems(plateItems);
 
-    // sync state biar konsisten (tanpa bikin loop)
     if (selectedPlate != safeValue) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -1294,7 +1234,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
                 ),
                 isThreeLine: true,
 
-                // ✅ tombol panel booking
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1308,7 +1247,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
                   ],
                 ),
 
-                // onTap tetap ke detail (fitur lama)
                 onTap: () async {
                   if (id <= 0) {
                     _showReportDetail(r, note);
@@ -1367,9 +1305,6 @@ class _DriverHomePageState extends State<DriverHomePage> {
     );
   }
 
-  // =========================
-  // UI helpers
-  // =========================
   Widget _sectionTitle(String t) => Text(
         t,
         style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
