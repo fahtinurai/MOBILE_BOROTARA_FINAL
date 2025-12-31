@@ -8,7 +8,7 @@ class FirestoreService {
     return _db.collection('users').doc(userId).collection('notifications');
   }
 
-  /// Stream list notifikasi (terbaru di atas)
+  /// Stream list notifikasi sehingga yang terbaru diatas
   /// - orderBy created_at (kalau string ISO, tetap bisa diorder kalau format ISO)
   static Stream<QuerySnapshot<Map<String, dynamic>>> streamNotifications({
     required String userId,
@@ -20,7 +20,7 @@ class FirestoreService {
         .snapshots();
   }
 
-  /// Stream hitung unread untuk badge
+  /// Stream untuk menghitung unread badge
   static Stream<int> streamUnreadCount({
     required String userId,
   }) {
@@ -30,7 +30,7 @@ class FirestoreService {
         .map((snap) => snap.docs.length);
   }
 
-  /// Mark 1 notifikasi as read
+  /// Menandai 1 notifikasi supaya terbaca
   static Future<void> markAsRead({
     required String userId,
     required String notificationId,
@@ -45,7 +45,7 @@ class FirestoreService {
     });
   }
 
-  /// Mark semua notifikasi unread jadi read
+  /// Menandai semua notifikasi dari unread menjadi read
   static Future<void> markAllAsRead({
     required String userId,
     int batchSize = 200,
