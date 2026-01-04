@@ -1,17 +1,4 @@
-// technician_home.dart
-// ✅ FULL FILE (UI lengkap) + Service Jobs (booking approved/rescheduled)
-// - Tidak mengubah fungsi lama (Inbox/Respond/Sparepart/CostEstimate/FCM/Logout tetap).
-//
-// ✅ Tambahan (PATCH):
-// - Tab baru "Reviews" untuk teknisi:
-//   GET /api/technician/reviews
-//   Menampilkan: summary (avg_rating & total_reviews) + list review (bintang + komentar)
-//
-// ⚠️ NOTE:
-// - Patch ini TIDAK mengubah ApiService kamu.
-// - Karena ApiService belum punya method getTechnicianReviews(), tab Reviews di file ini
-//   memakai Dio langsung (dengan Bearer token yang sama) supaya benar-benar "load GET /technician/reviews"
-//   tanpa mengubah file lain.
+
 
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -21,9 +8,7 @@ import 'API/api_service.dart';
 import 'utils/auth_storage.dart';
 import 'main.dart';
 
-// =====================================================
-// STATUS LABEL HELPER (DamageReport/TechnicianResponse)
-// =====================================================
+//status label helper (damage report)
 String statusLabel(String s) {
   switch (s) {
     case 'menunggu':
@@ -43,9 +28,8 @@ String statusLabel(String s) {
   }
 }
 
-// =====================================================
-// STATUS LABEL HELPER (Service Booking / Service Job)
-// =====================================================
+
+// status label helper (Service Booking / Service Job)
 String jobStatusLabel(String s) {
   switch (s) {
     case 'requested':
@@ -65,10 +49,7 @@ String jobStatusLabel(String s) {
   }
 }
 
-// =====================================================
-// ✅ FIX: NORMALIZE DROPDOWN VALUE (biar gak crash)
-// Backend respond validate: proses|butuh_followup_admin|fatal|selesai
-// =====================================================
+//Untuk Backend Respond Validate
 String normalizeTechnicianRespondStatus(String s) {
   const allowed = {
     'proses',
@@ -81,9 +62,7 @@ String normalizeTechnicianRespondStatus(String s) {
   return 'proses';
 }
 
-// =====================================================
-// SAFE PARSERS
-// =====================================================
+//safe parsers
 int _toInt(dynamic v, [int fallback = 0]) {
   if (v == null) return fallback;
   if (v is int) return v;
@@ -104,9 +83,7 @@ Map<String, dynamic>? _toMap(dynamic v) {
 
 List<dynamic> _toList(dynamic v) => (v is List) ? v : <dynamic>[];
 
-// =====================================================
-// MODELS (minimal untuk halaman teknisi)
-// =====================================================
+//models
 class ApiVehicle {
   final int id;
   final String? brand;

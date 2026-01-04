@@ -5,7 +5,7 @@ class ApiVehicle {
   final String? plateNumber;
   final int? year;
 
-  // ✅ fitur pengingat servis berikutnya
+  // Fitur untuk mengingat servis berikutnya
   final DateTime? nextServiceAt;
   final bool reminderEnabled;
   final int reminderDaysBefore;
@@ -21,9 +21,7 @@ class ApiVehicle {
     this.reminderDaysBefore = 3,
   });
 
-  // =========================
-  // SAFE HELPERS
-  // =========================
+ //safe helpers
   static int _toInt(dynamic v, [int fallback = 0]) {
     if (v == null) return fallback;
     if (v is int) return v;
@@ -55,7 +53,7 @@ class ApiVehicle {
       plateNumber: (j['plate_number'] ?? j['plate'] ?? j['plateNumber'])?.toString(),
       year: (j['year'] is int) ? j['year'] as int : int.tryParse('${j['year']}'),
 
-      // ✅ service reminder
+      // untuk service reminder
       nextServiceAt: _toDate(j['next_service_at'] ?? j['nextServiceAt']),
       reminderEnabled: _toBool(j['reminder_enabled'] ?? j['reminderEnabled'], false),
       reminderDaysBefore: _toInt(j['reminder_days_before'] ?? j['reminderDaysBefore'], 3),
@@ -69,16 +67,12 @@ class ApiVehicle {
         "plate_number": plateNumber,
         "year": year,
 
-        // ✅ service reminder
+        
         "next_service_at": nextServiceAt?.toIso8601String(),
         "reminder_enabled": reminderEnabled,
         "reminder_days_before": reminderDaysBefore,
       };
 }
-
-// =====================================================
-// ✅ NEW MODELS: Booking, CostEstimate, Review
-// =====================================================
 
 class ApiServiceBooking {
   final int id;
@@ -174,7 +168,7 @@ class ApiCostEstimate {
   final int otherCost;
   final int totalCost;
 
-  final String status; // draft|submitted|approved|rejected
+  final String status; // stauts apakah draft|submitted|approved|rejected
   final String? note;
 
   final int? approvedBy;
@@ -213,7 +207,7 @@ class ApiCostEstimate {
     final parts = _toInt(j['parts_cost'] ?? j['partsCost'], 0);
     final other = _toInt(j['other_cost'] ?? j['otherCost'], 0);
 
-    // total_cost bisa dari backend, tapi kalau belum ada, kita hitung fallback
+    // total_cost dari backend
     final total = (j['total_cost'] ?? j['totalCost']) == null
         ? (labor + parts + other)
         : _toInt(j['total_cost'] ?? j['totalCost'], (labor + parts + other));
@@ -307,10 +301,6 @@ class ApiTechnicianReview {
       };
 }
 
-// =====================================================
-// ✅ ApiDamageReport (updated)
-// =====================================================
-
 class ApiDamageReport {
   final int id;
   final String description;
@@ -318,7 +308,7 @@ class ApiDamageReport {
   final String? note;
   final ApiVehicle? vehicle;
 
-  // ✅ fitur baru (optional)
+
   final ApiServiceBooking? booking;
   final ApiCostEstimate? costEstimate;
   final ApiTechnicianReview? review;
@@ -334,9 +324,6 @@ class ApiDamageReport {
     this.review,
   });
 
-  // =========================
-  // SAFE HELPERS
-  // =========================
   static int _toInt(dynamic v, [int fallback = 0]) {
     if (v == null) return fallback;
     if (v is int) return v;
@@ -355,9 +342,7 @@ class ApiDamageReport {
     return null;
   }
 
-  // =========================
-  // JSON (API BACKEND)
-  // =========================
+
   factory ApiDamageReport.fromJson(Map<String, dynamic> j) {
     final latest = _asMap(j['latestTechnicianResponse'] ?? j['latest_technician_response']);
 
@@ -379,7 +364,7 @@ class ApiDamageReport {
 
     final v = _asMap(j['vehicle']);
 
-    // ✅ fitur baru: booking / cost_estimate / review
+    // booking / cost_estimate / review
     final b = _asMap(j['booking'] ?? j['service_booking']);
     final c = _asMap(j['costEstimate'] ?? j['cost_estimate']);
     final r = _asMap(j['review'] ?? j['technician_review']);
@@ -407,10 +392,7 @@ class ApiDamageReport {
         "review": review?.toJson(),
       };
 
-  // =========================
-  // ✅ FIREBASE / FCM HELPERS
-  // =========================
-
+  //firebase / fcm helper
   static bool isDamageReportPayload(Map<String, dynamic> data) {
     final type = (data['type'] ?? '').toString();
     return type == 'damage_report';
