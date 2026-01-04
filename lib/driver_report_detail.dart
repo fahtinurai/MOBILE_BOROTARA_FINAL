@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'API/api_service.dart';
 
 class DriverReportDetailPage extends StatefulWidget {
@@ -470,11 +471,36 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t)));
   }
+// =========================
+// BOOKING UI HELPERS
+// =========================
+
+// ✅ parse backend datetime (ISO atau "YYYY-MM-DD HH:mm:ss") -> local DateTime
+DateTime? _parseBackendDate(dynamic raw) {
+  if (raw == null) return null;
+
+  final s = raw.toString().trim();
+  if (s.isEmpty || s == '-') return null;
+
+  // normalize jika backend kadang kirim "YYYY-MM-DD HH:mm:ss"
+  final normalized = s.contains('T') ? s : s.replaceFirst(' ', 'T');
+
+  try {
+    return DateTime.parse(normalized).toLocal();
+  } catch (_) {
+    return null;
+  }
+}
 
   String _fmtDateTime(dynamic raw) {
-    final s = _str(raw, '-');
-    if (s == '-' || s.trim().isEmpty) return '-';
-    return s;
+    final dt = _parseBackendDate(raw);
+    if (dt == null) return '-';
+    return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(dt);
+  }
+
+  String _fmtPreferredLocal(DateTime? dt) {
+    if (dt == null) return 'Belum dipilih';
+    return DateFormat('dd MMM yyyy, HH:mm', 'id_ID').format(dt.toLocal());
   }
 
   Color _badgeBg(String status) {
@@ -565,8 +591,10 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
                                     final m = _toMap(x) ?? <String, dynamic>{};
                                     final st = _str(m['status']);
                                     final note = _str(m['note']);
-                                    final at =
-                                        _str(m['created_at'] ?? m['updated_at']);
+
+                                    // ✅ tampil lokal rapi
+                                    final at = _fmtDateTime(
+                                        m['created_at'] ?? m['updated_at']);
 
                                     return Container(
                                       margin: const EdgeInsets.only(bottom: 10),
@@ -707,8 +735,7 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
           ListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Preferensi jadwal (opsional)'),
-            subtitle: Text(
-                _preferredAt == null ? 'Belum dipilih' : _preferredAt.toString()),
+            subtitle: Text(_fmtPreferredLocal(_preferredAt)),
             trailing: TextButton(
               onPressed: _pickPreferredAt,
               child: const Text('Pilih'),
@@ -808,7 +835,7 @@ class _DriverReportDetailPageState extends State<DriverReportDetailPage> {
                     title: const Text('Preferensi jadwal'),
                     subtitle: Text(_preferredAt == null
                         ? 'Tidak diisi'
-                        : _preferredAt.toString()),
+                        : _fmtPreferredLocal(_preferredAt)),
                     trailing: TextButton(
                       onPressed: _pickPreferredAt,
                       child: const Text('Ubah'),

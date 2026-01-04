@@ -3,7 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
-import 'firebase_options.dart'; // ✅ sesuai push_fcm.dart (FlutterFire CLI)
+// ✅ locale/intl init
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
+
+import 'firebase_options.dart';
 
 import 'API/api_service.dart';
 import 'utils/auth_storage.dart';
@@ -13,15 +17,14 @@ import 'driver_home.dart';
 import 'driver_report_detail.dart';
 import 'technician_home.dart';
 
-// ✅ JANGAN BUAT navKey BARU.
-// Pakai navKey dari push_fcm.dart supaya 1 sumber untuk navigasi notif.
-// final GlobalKey<NavigatorState> navKey = GlobalKey<NavigatorState>(); // ❌ HAPUS / JANGAN DIPAKAI
-
 /// =====================================================
 /// MAIN
 /// =====================================================
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ✅ FIX LocaleDataException: init locale data (id_ID)
+  await initializeDateFormatting('id_ID', null);
 
   // ✅ WAJIB pakai options biar konsisten dengan push_fcm.dart (background handler juga pakai ini)
   await Firebase.initializeApp(
@@ -46,6 +49,18 @@ class BengkelApp extends StatelessWidget {
       title: 'Bengkel Mobile',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.blue),
+
+      // ✅ FIX LocaleDataException (DateFormat locale)
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('id', 'ID'),
+        Locale('en', 'US'),
+      ],
+      locale: const Locale('id', 'ID'),
 
       // ✅ penting supaya FCM bisa navigasi dari mana saja
       // ✅ ambil navKey dari push_fcm.dart (bukan bikin lagi)
@@ -315,17 +330,12 @@ Future<void> _setupFcm(String token) async {
   await initFcm(
     onNewToken: (fcmToken) async {
       try {
-        // ✅ sesuaikan dengan backend kamu
         await api.registerFcmToken(fcmToken);
       } catch (_) {}
     },
-
-    // ✅ tap notif (background/terminated)
     onOpenFromNotification: (data) {
       _handleNotificationTap(data: data, token: token);
     },
-
-    // ✅ notif masuk saat foreground
     onForegroundMessage: (msg) {
       final ctx = navKey.currentContext;
       if (ctx == null) return;
@@ -370,7 +380,8 @@ void _handleNotificationTap({
       Navigator.push(
         ctx,
         MaterialPageRoute(
-          builder: (_) => DriverReportDetailPage(token: token, reportId: reportId),
+          builder: (_) =>
+              DriverReportDetailPage(token: token, reportId: reportId),
         ),
       );
       return;

@@ -11,7 +11,10 @@ class ApiService {
   // =============================
   // CONFIG
   // =============================
-  static const String baseUrl = "http://192.168.0.108:8000/api";
+  static const String baseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: 'http://10.0.2.2:8000/api',
+  );
   static const String loginUrl = "$baseUrl/login";
 
   // =============================
@@ -121,6 +124,13 @@ class ApiService {
     if (u is Map) return u.map((k, v) => MapEntry(k.toString(), v));
     return null;
   }
+
+  // =============================
+  // ✅ UTC-safe helpers
+  // - selalu kirim datetime sebagai ISO UTC (Z)
+  // =============================
+  String _toUtcIso(DateTime dt) => dt.toUtc().toIso8601String();
+  String? _toUtcIsoOrNull(DateTime? dt) => dt == null ? null : _toUtcIso(dt);
 
   // =============================
   // QueryString builder
@@ -316,7 +326,7 @@ class ApiService {
     String? noteDriver,
   }) async {
     final res = await _post('/driver/damage-reports/$reportId/booking', {
-      if (preferredAt != null) "preferred_at": preferredAt.toIso8601String(),
+      if (preferredAt != null) "preferred_at": _toUtcIso(preferredAt),
       if (noteDriver != null && noteDriver.trim().isNotEmpty)
         "note_driver": noteDriver.trim(),
     });
@@ -368,7 +378,7 @@ class ApiService {
     required int reminderDaysBefore,
   }) {
     return _put('/driver/vehicles/$vehicleId/service-reminder', {
-      "next_service_at": nextServiceAt?.toIso8601String(),
+      "next_service_at": _toUtcIsoOrNull(nextServiceAt),
       "reminder_enabled": reminderEnabled,
       "reminder_days_before": reminderDaysBefore,
     });
@@ -562,9 +572,9 @@ class ApiService {
     String? noteAdmin,
   }) {
     return _post('/admin/bookings/$bookingId/approve', {
-      "scheduled_at": scheduledAt.toIso8601String(),
+      "scheduled_at": _toUtcIso(scheduledAt),
       if (estimatedFinishAt != null)
-        "estimated_finish_at": estimatedFinishAt.toIso8601String(),
+        "estimated_finish_at": _toUtcIso(estimatedFinishAt),
       if (noteAdmin != null && noteAdmin.trim().isNotEmpty)
         "note_admin": noteAdmin.trim(),
     });
@@ -599,4 +609,4 @@ class ApiService {
       if (note != null && note.trim().isNotEmpty) "note": note.trim(),
     });
   }
-} 
+}
